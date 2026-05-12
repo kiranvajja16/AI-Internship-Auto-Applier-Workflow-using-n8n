@@ -1,0 +1,177 @@
+{
+  "name": "AI Internship Applier",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1Aob3QezKnkAPoVfBQvdMOdwivtQRxfOX6Tv25HlRlRw",
+          "mode": "list",
+          "cachedResultName": "My Job Applications",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Aob3QezKnkAPoVfBQvdMOdwivtQRxfOX6Tv25HlRlRw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Aob3QezKnkAPoVfBQvdMOdwivtQRxfOX6Tv25HlRlRw/edit#gid=0"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        -96
+      ],
+      "id": "2d569a6e-0fc0-4960-8a95-8de031eac0b3",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "uW64YPeheMzURScL",
+          "name": "Google Sheets Trigger account 3626"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a B.Tech student applying for a software development internship.\nGiven your name, the internship role you're applying for, and optionally your Details, experience, and skills — write a short, polite, confident and ready-to-send email introducing yourself and expressing interest in the internship opportunity.\nKeep the tone enthusiastic but formal. Mention that you're eager to learn and contribute, and that you're looking forward to hearing back. End the email with a thank you and your name.\nUse \"Dear Hiring Manager\" as the greeting. Do not include any placeholder text, brackets, or variables that need to be filled in. The email should be complete and ready to send as-is.\nHere is your information:\nName:  {{ $json['Full Name'] }}\nto:  {{ $json.Email }}\nInternship Role:  {{ $json['Position Applied'] }}\nDetails:  {{ $json.Details }}\nExperience: {{ $json['Experience(Years)'] }}\nSkills:{{ $json.Skills }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -112,
+        -96
+      ],
+      "id": "a6b258f6-b7ef-4868-9810-c8007323f771",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -112,
+        128
+      ],
+      "id": "5e428933-b4ef-4228-92b2-bda6cedd62a1",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "irHcX6id0eN0uMqg",
+          "name": "Google Gemini(PaLM) Api account 9236"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.output.properties.to.type}}",
+        "subject": "={{$json.output.properties.subject.type}}",
+        "emailType": "text",
+        "message": "={{ $json.output.properties.body.type}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        -96
+      ],
+      "id": "6fb1510a-77bd-4604-95ad-1ee86e5969d2",
+      "name": "Send a message",
+      "webhookId": "c33c8f6f-143a-4b7b-8237-3bf428cca1f2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Osh0ltPVhXsf2MIq",
+          "name": "Gmail account 2468"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"to\": {\n      \"type\": \"string\"\n    },\n    \"subject\": {\n      \"type\": \"string\"\n    },\n    \"body\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        32,
+        112
+      ],
+      "id": "b3c51f9f-d16d-49e6-ab5c-92a2b72bab67",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3f383748-4b8d-4d28-b959-2fca8eb2dde2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "969257b09ad2942bbaff2e2288304f4969030574d109cdeca05bf11f630884df"
+  },
+  "id": "BUqwASKgeQVQ6Leh",
+  "tags": []
+}
